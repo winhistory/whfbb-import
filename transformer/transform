@@ -1,0 +1,83 @@
+#!/usr/bin/env node
+
+var FILE_IMPORT_PATH = './import/files/0_CSVs';
+var FILE_EXPORT_PATH = './import/files/1_JSONs';
+
+process.env.NODE_ENV = 'importer';
+
+'use strict';
+
+var _ = require('lodash');
+var fs = require('fs');
+var glob = require('glob')
+var async = require('async');
+var config = require('config');
+var logger = require('../../util/logger')(__filename);
+var parse = require('csv-parse');
+
+
+Importer(config, function(err) {
+  if (err) {
+    logger.error('Transform failed', err);
+    process.exit(1);
+  } else {
+    logger.info('Transformed');
+    process.exit(0);
+  }
+});
+
+function Importer(config, callback) {
+  logger.info('Transforming...');
+
+  async.waterfall([
+    async.apply(glob, FILE_IMPORT_PATH + '/*.csv'),
+    function(fileNames, cb) {
+      async.each(fileNames, function (fileName, cb) {
+        fs.readFile(fileName, 'utf8', function (err, content) {
+          if (err) {
+            return cb(err);
+          }
+          return ParseFile(fileName, content.replace(/\n\\n/g, '[:newline:]'), cb);
+        });
+      }, cb);
+    }
+  ], callback);
+}
+
+function ParseFile(fileName, fileContent, callback) {
+  parse(fileContent, {
+    delimiter: '\t',
+    quote: '',
+    columns: true,
+    auto_parse: true,
+    auto_parse_dase: true
+  }, function(err, data) {
+    if (err) {
+      logger.error(err);
+      return;
+    }
+    logger.info(fileName + ' parsed');
+    if (fileName.indexOf('forums') > -1) {
+      return SaveForums(data, callback);
+    } else if (fileName.indexOf('posts') > -1) {
+      return SavePosts(data, callback);
+    } else if (fileName.indexOf('threads') > -1) {
+      return SaveThreads(data, callback);
+    }
+  });
+}
+
+function SavePosts (posts, callback) {
+  fs.writeFile(FILE_EXPORT_PATH + '/posts.json', JSON.stringify(posts, null, 2), {encoding: 'utf8', flag : 'w'}, callback);
+  logger.info(FILE_EXPORT_PATH + '/posts.json saved');
+}
+
+function SaveThreads (threads, callback) {
+  fs.writeFile(FILE_EXPORT_PATH + '/threads.json', JSON.stringify(threads, null, 2), {encoding: 'utf8', flag : 'w'}, callback);
+  logger.info(FILE_EXPORT_PATH + '/threads.json saved');
+}
+
+function SaveForums (forums, callback) {
+  fs.writeFile(FILE_EXPORT_PATH + '/forums.json', JSON.stringify(forums, null, 2), {encoding: 'utf8', flag : 'w'}, callback);
+  logger.info(FILE_EXPORT_PATH + '/forums.json saved');
+}

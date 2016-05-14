@@ -1,0 +1,16 @@
+{
+  "name": "whfbb-import",
+  "version": "1.0.0",
+  "description": "Tools for converting a MyBB DB into WHFBB Format",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "JSONStream": "^1.1.1",
+    "csv-streamify": "^3.0.3",
+    "replacestream": "^4.0.0"
+  }
+}
