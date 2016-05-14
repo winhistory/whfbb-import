@@ -1,2 +1,4 @@
+files/input/*
+files/output/*
 node_modules
-files/*
+node_modules/*

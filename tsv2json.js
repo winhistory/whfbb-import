@@ -10,8 +10,6 @@ var csvToJson = csv({
     delimiter: '\t',
     quote: 'DUMMKOPFSLIBDIEEMPTYSTRINGNICHTKANN',
     columns: true,
-    auto_parse: true,
-    auto_parse_dase: true,
     objectMode: true
   });
 
@@ -25,9 +23,15 @@ var jsonToStrings = JSONStream.stringify(false);
 
 process.stdin
   .pipe(replaceStream(/\n\\n/g, '[-:newline:-]'))
-  //.pipe(replaceStream('"', '[:quote:]'))
   .pipe(csvToJson)
   .pipe(parser)
   .pipe(jsonToStrings)
   .pipe(replaceStream('[-:newline:-]', '\\\\n'))
-  .pipe(process.stdout);
+  .pipe(process.stdout)
+  .on('finish', function (err) {
+    if (err) {
+      console.log(err);
+      return process.exit(1);
+    }
+    return process.exit(0);
+  });
